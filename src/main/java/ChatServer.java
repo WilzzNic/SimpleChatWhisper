@@ -17,6 +17,7 @@ public class ChatServer {
         while (loop) {
             Socket socket = serverSocket.accept();
             ChatWorker worker = new ChatWorker(socket, workers, pool);
+            System.out.println(workers);
 
             synchronized (workers) {
                 workers.add(worker);

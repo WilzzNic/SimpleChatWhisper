@@ -14,6 +14,7 @@ public class ChatWorker implements Runnable {
     private final Queue<String> requests;
     private final Queue<String> responses;
     private String name;
+    private String whisperR = "";
 
     public ChatWorker(final Socket socket, final Set<ChatWorker> workers, final Executor pool) throws IOException {
         this.socket = socket;
@@ -48,7 +49,17 @@ public class ChatWorker implements Runnable {
                     if (request.startsWith("/name")) {
                         String name = request.split(" ").length > 1 ? request.split(" ")[1] : "unknown";
                         this.name = name;
-                    } else {
+//                        System.out.println(request.split(" ").length);
+                    }
+                    else if (request.startsWith("/whisper")) {
+                        String nameR = request.split(" ").length > 1 ? request.split(" ")[1] : "unknown";
+                        this.whisperR = nameR;
+                        String mess = request.substring(9);
+                        if (! request.trim().equals("")) {
+                            broadcast(String.format("%s: %s", this.name, mess));
+                        }
+                    }
+                    else {
                         switch (request) {
                             case "/stop":
                                 addMessage("bye-bye");
@@ -97,9 +108,25 @@ public class ChatWorker implements Runnable {
 
     public void broadcast(final String message) {
         synchronized (workers) {
-            workers.stream().filter(x -> x != this).forEach(worker -> {
-                worker.addMessage(String.format(message));
-            });
+            if (whisperR.equals("")) {
+                workers.stream().filter(x -> x != this).forEach(worker -> {
+                    worker.addMessage(String.format(message));
+                });
+            }
+            else {
+                ChatWorker specifiedUser = workers.stream().filter(x -> x.name.equals(whisperR)).findAny().orElse(null);
+                if (specifiedUser == null) {
+                    workers.stream().filter(x -> x == this).forEach(worker -> {
+                    worker.addMessage("Alert Message : User not found.");
+                    });
+                }
+                else {
+                    workers.stream().filter(x -> x.name.equals(whisperR)).forEach(worker -> {
+                    worker.addMessage(String.format(message));
+                    });
+                    whisperR = "";
+                }
+            }
         }
     }
 
