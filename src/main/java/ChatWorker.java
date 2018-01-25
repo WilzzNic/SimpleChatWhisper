@@ -54,7 +54,7 @@ public class ChatWorker implements Runnable {
                     else if (request.startsWith("/whisper")) {
                         String nameR = request.split(" ").length > 1 ? request.split(" ")[1] : "unknown";
                         this.whisperR = nameR;
-                        String mess = request.substring(9);
+                        String mess = request.substring(10 + whisperR.length());
                         if (! request.trim().equals("")) {
                             broadcast(String.format("%s: %s", this.name, mess));
                         }
